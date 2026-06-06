@@ -5,20 +5,35 @@ const $=id=>document.getElementById(id);
 
 // SETTINGS
 function saveNotifSettings(){
-  const s={remind7:$('remind-7').checked,remind3:$('remind-3').checked,remind1:$('remind-1').checked,remind0:$('remind-0').checked,time:$('remind-time').value};
+  const s={
+    remind7:$('remind-7')?.checked||false,
+    remind3:$('remind-3')?.checked||false,
+    remind1:$('remind-1')?.checked||false,
+    remind0:$('remind-0')?.checked||false,
+    time:$('remind-time')?.value||'09:00'
+  };
   localStorage.setItem('notif_settings',JSON.stringify(s));
+  console.log('Settings saved:', s);
 }
 function loadNotifSettings(){
-  try{const s=JSON.parse(localStorage.getItem('notif_settings')||'{}');
-    if('remind7'in s)$('remind-7').checked=s.remind7;
-    if('remind3'in s)$('remind-3').checked=s.remind3;
-    if('remind1'in s)$('remind-1').checked=s.remind1;
-    if('remind0'in s)$('remind-0').checked=s.remind0;
-    if(s.time)$('remind-time').value=s.time;
-  }catch(e){}
+  try{
+    const s=JSON.parse(localStorage.getItem('notif_settings')||'{}');
+    if('remind7'in s && $('remind-7')) $('remind-7').checked=s.remind7;
+    if('remind3'in s && $('remind-3')) $('remind-3').checked=s.remind3;
+    if('remind1'in s && $('remind-1')) $('remind-1').checked=s.remind1;
+    if('remind0'in s && $('remind-0')) $('remind-0').checked=s.remind0;
+    if(s.time && $('remind-time')) $('remind-time').value=s.time;
+    console.log('Settings loaded:', s);
+  }catch(e){ console.log('Settings load error:', e); }
 }
-document.querySelectorAll('#remind-7,#remind-3,#remind-1,#remind-0').forEach(el=>el.addEventListener('change',saveNotifSettings));
-$('remind-time').addEventListener('change',saveNotifSettings);
+// Add listeners after DOM ready
+setTimeout(()=>{
+  document.querySelectorAll('#remind-7,#remind-3,#remind-1,#remind-0').forEach(el=>{
+    if(el) el.addEventListener('change',saveNotifSettings);
+  });
+  const rt=$('remind-time');
+  if(rt) rt.addEventListener('change',saveNotifSettings);
+}, 500);
 
 // UTILS
 function getInitials(n){return(n||'').trim().split(/\s+/).map(w=>w[0]?.toUpperCase()||'').join('').slice(0,2)}
@@ -584,18 +599,57 @@ $('enable-notif-btn').addEventListener('click',async()=>{
   if(p==='granted'){showToast('🔔 Уведомления включены!');scheduleNotificationCheck();updateNotifBtn();}
   else showToast('Уведомления отклонены');
 });
-function scheduleNotificationCheck(){if(!('Notification'in window)||Notification.permission!=='granted')return;checkNotifications();setInterval(checkNotifications,3600000)}
+function scheduleNotificationCheck(){
+  // Schedule daily check at the specified time
+  checkNotifications();
+  setInterval(checkNotifications, 60*60*1000); // check every hour
+}
+
 function checkNotifications(){
-  const s={remind7:$('remind-7').checked,remind3:$('remind-3').checked,remind1:$('remind-1').checked,remind0:$('remind-0').checked};
-  const key='lastNotifCheck_'+(currentUser?.uid||'');
-  const today=new Date().toDateString();
-  if(localStorage.getItem(key)===today)return;
-  localStorage.setItem(key,today);
-  const thresholds=[];if(s.remind0)thresholds.push(0);if(s.remind1)thresholds.push(1);if(s.remind3)thresholds.push(3);if(s.remind7)thresholds.push(7);
-  [...people.map(p=>({name:p.name,date:p.birthday,type:'birthday'})),...couples.map(c=>({name:`${c.name1} & ${c.name2}`,date:c.wedding,type:'wedding'}))].forEach(ev=>{
-    const days=daysUntil(ev.date);if(!thresholds.includes(days))return;
+  if(!('Notification'in window)||Notification.permission!=='granted') return;
+  const s = {
+    remind7: $('remind-7')?.checked||false,
+    remind3: $('remind-3')?.checked||false,
+    remind1: $('remind-1')?.checked||false,
+    remind0: $('remind-0')?.checked||false,
+    time: $('remind-time')?.value||'09:00'
+  };
+  
+  // Check if it's the right time to send
+  const now = new Date();
+  const [h,m] = s.time.split(':').map(Number);
+  const notifTime = new Date(now); notifTime.setHours(h,m,0,0);
+  const key = 'lastNotifCheck_'+(currentUser?.uid||'');
+  const todayKey = now.toDateString();
+  
+  // Only send once per day (but don't block if testing)
+  if(localStorage.getItem(key)===todayKey) return;
+  
+  // Only send notifications at the right time (within 60min window)
+  const diff = Math.abs(now - notifTime);
+  if(diff > 60*60*1000 && now < notifTime) return;
+  
+  localStorage.setItem(key, todayKey);
+  
+  const thresholds=[];
+  if(s.remind0)thresholds.push(0);
+  if(s.remind1)thresholds.push(1);
+  if(s.remind3)thresholds.push(3);
+  if(s.remind7)thresholds.push(7);
+  
+  [...people.map(p=>({name:p.name,date:p.birthday,type:'birthday'})),
+   ...couples.map(c=>({name:`${c.name1} & ${c.name2}`,date:c.wedding,type:'wedding'}))
+  ].forEach(ev=>{
+    const days=daysUntil(ev.date);
+    if(!thresholds.includes(days))return;
     const label=ev.type==='birthday'?'день рождения':'годовщина свадьбы';
-    new Notification(days===0?`🎉 Сегодня ${label}!`:`🔔 Скоро ${label}`,{body:days===0?`У ${ev.name} сегодня ${label}!`:`У ${ev.name} через ${days} дн. ${label}`,icon:'/img/icon-192.png'});
+    try {
+      new Notification(
+        days===0?`🎉 Сегодня ${label}!`:`🔔 Через ${days} дн. ${label}`,
+        {body:days===0?`У ${ev.name} сегодня ${label}!`:`У ${ev.name} через ${days} дн. ${label}`,
+         icon:'/img/icon-192.png', tag: ev.name+days}
+      );
+    } catch(e) { console.log('Notif error:', e); }
   });
 }
 if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
