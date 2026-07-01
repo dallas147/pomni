@@ -1,5 +1,5 @@
-const CACHE = 'pomniprazdnik-v3';
-const ASSETS = ['/', '/index.html', '/css/style.css', '/js/app.js', '/js/firebase-config.js', '/manifest.json', '/img/icon-192.png', '/favicon.ico'];
+const CACHE = 'pomniprazdnik-v4';
+const ASSETS = ['/', '/index.html', '/css/style.css', '/js/app.js', '/js/firebase-config.js', '/manifest.json', '/img/icon-192.png', '/favicon.ico', '/privacy.html'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
@@ -16,10 +16,12 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
   if (e.request.url.includes('firebaseapp.com') ||
       e.request.url.includes('googleapis.com') ||
       e.request.url.includes('gstatic.com') ||
-      e.request.url.includes('fonts.')) return;
+      e.request.url.includes('fonts.') ||
+      e.request.url.includes('googletagmanager')) return;
   e.respondWith(
     fetch(e.request)
       .then(res => {
