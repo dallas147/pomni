@@ -50,17 +50,25 @@
 
       <div class="auth-divider"><span>или</span></div>
 
-      <!-- Email/Password -->
-      <div id="email-form" class="email-form">
+      <!-- LOGIN FORM -->
+      <div id="login-form" class="email-form">
         <input type="email" id="auth-email" class="auth-input" placeholder="Email">
         <input type="password" id="auth-password" class="auth-input" placeholder="Пароль">
         <button id="email-signin-btn" class="email-btn">Войти</button>
-        <button id="email-signup-btn" class="email-btn email-btn-outline">Зарегистрироваться</button>
+        <button id="show-signup-btn" class="email-btn email-btn-outline">Зарегистрироваться</button>
+        <button id="forgot-btn" class="forgot-btn">Забыл пароль</button>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="register-form" class="email-form hidden">
+        <button id="back-to-login-btn" class="forgot-btn" style="text-align:left;margin-bottom:8px">← Назад ко входу</button>
+        <input type="email" id="reg-email" class="auth-input" placeholder="Email">
+        <input type="password" id="reg-password" class="auth-input" placeholder="Пароль (минимум 6 символов)">
         <label class="consent-row">
           <input type="checkbox" id="consent-cb">
-          <span>Регистрируясь, я принимаю <a href="/privacy.html" target="_blank">политику конфиденциальности</a> и даю согласие на обработку персональных данных</span>
+          <span>Я принимаю <a href="/privacy.html" target="_blank">политику конфиденциальности</a> и даю согласие на обработку персональных данных</span>
         </label>
-        <button id="forgot-btn" class="forgot-btn">Забыл пароль</button>
+        <button id="email-signup-btn" class="email-btn">Создать аккаунт</button>
       </div>
 
       <p class="auth-note">Ваши данные хранятся только в вашем аккаунте</p>
