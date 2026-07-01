@@ -179,9 +179,41 @@ function setupPhotoUpload(inId,prevId,clrId,onSet){
 
 // AUTH
 $('google-signin-btn').addEventListener('click',async()=>{try{await setPersistence(auth,browserLocalPersistence);await signInWithPopup(auth,provider)}catch(e){showToast('Ошибка: '+e.message)}});
-$('email-signin-btn').addEventListener('click',async()=>{const email=$('auth-email').value.trim(),pass=$('auth-password').value;if(!email||!pass){showToast('Введите email и пароль');return}try{await setPersistence(auth,browserLocalPersistence);await signInWithEmailAndPassword(auth,email,pass)}catch(e){const m={'auth/user-not-found':'Пользователь не найден','auth/wrong-password':'Неверный пароль','auth/invalid-credential':'Неверный email или пароль'};showToast(m[e.code]||'Ошибка: '+e.message)}});
-$('email-signup-btn').addEventListener('click',async()=>{const email=$('auth-email').value.trim(),pass=$('auth-password').value;if(!email||!pass){showToast('Введите email и пароль');return}if(pass.length<6){showToast('Пароль минимум 6 символов');return}if(!$('consent-cb')?.checked){showToast('Необходимо согласие на обработку данных');return}try{await setPersistence(auth,browserLocalPersistence);await createUserWithEmailAndPassword(auth,email,pass)}catch(e){const m={'auth/email-already-in-use':'Email уже используется','auth/weak-password':'Слишком простой пароль'};showToast(m[e.code]||'Ошибка: '+e.message)}});
-$('forgot-btn').addEventListener('click',async()=>{const email=$('auth-email').value.trim();if(!email){showToast('Введите email');return}try{await sendPasswordResetEmail(auth,email);showToast('📧 Письмо отправлено')}catch(e){showToast('Ошибка: '+e.message)}});
+// Show/hide forms
+$('show-signup-btn').addEventListener('click',()=>{
+  $('login-form').classList.add('hidden');
+  $('register-form').classList.remove('hidden');
+});
+$('back-to-login-btn').addEventListener('click',()=>{
+  $('register-form').classList.add('hidden');
+  $('login-form').classList.remove('hidden');
+});
+
+// Login
+$('email-signin-btn').addEventListener('click',async()=>{
+  const email=$('auth-email').value.trim(),pass=$('auth-password').value;
+  if(!email||!pass){showToast('Введите email и пароль');return}
+  try{await setPersistence(auth,browserLocalPersistence);await signInWithEmailAndPassword(auth,email,pass)}
+  catch(e){const m={'auth/user-not-found':'Пользователь не найден','auth/wrong-password':'Неверный пароль','auth/invalid-credential':'Неверный email или пароль'};showToast(m[e.code]||'Ошибка: '+e.message)}
+});
+
+// Register
+$('email-signup-btn').addEventListener('click',async()=>{
+  const email=$('reg-email').value.trim(),pass=$('reg-password').value;
+  if(!email||!pass){showToast('Введите email и пароль');return}
+  if(pass.length<6){showToast('Пароль минимум 6 символов');return}
+  if(!$('consent-cb')?.checked){showToast('Необходимо принять политику конфиденциальности');return}
+  try{await setPersistence(auth,browserLocalPersistence);await createUserWithEmailAndPassword(auth,email,pass)}
+  catch(e){const m={'auth/email-already-in-use':'Email уже используется','auth/weak-password':'Слишком простой пароль'};showToast(m[e.code]||'Ошибка: '+e.message)}
+});
+
+// Forgot password
+$('forgot-btn').addEventListener('click',async()=>{
+  const email=$('auth-email').value.trim();
+  if(!email){showToast('Введите email');return}
+  try{await sendPasswordResetEmail(auth,email);showToast('📧 Письмо отправлено')}
+  catch(e){showToast('Ошибка: '+e.message)}
+});
 $('signout-btn').addEventListener('click',()=>signOut(auth));
 
 onAuthStateChanged(auth,user=>{
